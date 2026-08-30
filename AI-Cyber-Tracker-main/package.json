@@ -1,0 +1,10 @@
+{
+  "name": "ai-cyber-tracker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "client": "npm --prefix client run dev",
+    "server": "npm --prefix server run dev",
+    "scanner:test": "npm --prefix server run scanner:test"
+  }
+}

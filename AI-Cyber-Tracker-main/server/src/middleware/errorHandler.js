@@ -1,0 +1,3 @@
+import { HttpError } from "../utils/HttpError.js";
+export function notFoundHandler(req, _res, next) { next(new HttpError(404, `No API route matches ${req.method} ${req.originalUrl}`, "NOT_FOUND")); }
+export function errorHandler(error, _req, res, _next) { const status = error.statusCode || 500; if (status >= 500) console.error(JSON.stringify({ type: "server_error", name: error.name, message: error.message })); res.status(status).json({ success: false, error: { code: error.code || "INTERNAL_ERROR", message: status >= 500 ? "Something went wrong on the server." : error.message, ...(error.details ? { details: error.details } : {}) } }); }
