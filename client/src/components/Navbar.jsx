@@ -3,34 +3,22 @@ import { useAuth } from "../context/AuthContext";
 import Button from "./Button";
 
 function Navbar() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     navigate("/login");
   }
 
   return (
-    <nav className="border-b px-6 py-4">
-
-      <div className="max-w-6xl mx-auto flex justify-between items-center">
-
-        <h1 className="text-xl font-bold">
-          AI Cyber Tracker
-        </h1>
-
-        <Button
-          variant="secondary"
-          onClick={handleLogout}
-        >
-          Logout
-        </Button>
-
+    <header className="dashboard-topbar">
+      <div><p className="eyebrow">Protected workspace</p><h1>AI Cyber Tracker</h1></div>
+      <div className="topbar-actions">
+        <span className="user-chip">{user?.user_metadata?.name || user?.email || "User"}</span>
+        <Button variant="secondary" onClick={handleLogout}>Logout</Button>
       </div>
-
-    </nav>
+    </header>
   );
 }
-
 export default Navbar;

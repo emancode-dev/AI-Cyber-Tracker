@@ -1,0 +1,2 @@
+function SolutionSection() { return <section className="section section-soft"><div className="page-width split-section"><div className="section-heading"><p className="eyebrow">The approach</p><h2>Facts first, scoring second, explanation last.</h2></div><div className="content-panel"><p>The scanner produces normalized evidence. Owner answers later add context. A deterministic JavaScript risk engine calculates the score, while AI will only explain minimized verified evidence.</p></div></div></section>; }
+export default SolutionSection;

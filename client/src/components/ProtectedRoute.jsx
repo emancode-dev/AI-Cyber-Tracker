@@ -1,18 +1,13 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Loader from "./Loader";
 
 function ProtectedRoute({ children }) {
   const { authStatus } = useAuth();
-
   if (authStatus === "checking") {
-    return <h1>Checking authentication...</h1>;
+    return <div className="centered-page"><Loader label="Checking session..." /></div>;
   }
-
-  if (authStatus === "unauthenticated") {
-    return <Navigate to="/login" replace />;
-  }
-
+  if (authStatus === "unauthenticated") return <Navigate to="/login" replace />;
   return children;
 }
-
 export default ProtectedRoute;

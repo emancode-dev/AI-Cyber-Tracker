@@ -1,22 +1,17 @@
-function Button({
-  children,
-  variant = "primary",
-  onClick,
-  type = "button",
-  disabled = false
-}) {
-  const styles = {
-    primary: "bg-blue-600 text-white",
-    danger: "bg-red-600 text-white",
-    secondary: "bg-gray-200 text-gray-800"
-  };
+function Button({ children, variant = "primary", onClick, type = "button", disabled = false, className = "" }) {
+  const variantClass = {
+    primary: "button-primary",
+    secondary: "button-secondary",
+    danger: "button-danger",
+    ghost: "button-ghost"
+  }[variant] || "button-primary";
 
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`px-4 py-2 rounded-lg ${styles[variant]}`}
+      className={`button ${variantClass} ${className}`.trim()}
     >
       {children}
     </button>

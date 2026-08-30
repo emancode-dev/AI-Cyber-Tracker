@@ -1,56 +1,24 @@
 import Button from "./Button";
+import { getRiskLabel } from "../utils/risk";
 
-function WebsiteCard({
-  website,
-  onDelete,
-  onScan
-}) {
+function WebsiteCard({ website, onDelete, onScan = () => {} }) {
+  const risk = getRiskLabel(website.score);
   return (
-    <div className="border rounded-xl p-5">
-
-      <div className="flex justify-between">
-
+    <article className="website-card">
+      <div className="website-card-header">
         <div>
-          <h2 className="text-xl font-semibold">
-            {website.name}
-          </h2>
-
-          <p className="text-gray-500">
-            {website.url}
-          </p>
+          <p className="eyebrow">{risk.label}</p>
+          <h2>{website.name}</h2>
+          <p className="muted break-word">{website.url}</p>
+          <p className="tiny-note">Authorization confirmed {website.authorization_confirmed ? "✓" : "—"}</p>
         </div>
-
-        <div>
-          <p className="text-sm text-gray-500">
-            Security Score
-          </p>
-
-          <p className="text-2xl font-bold">
-            {website.score}
-          </p>
-        </div>
-
+        <div className={`score-badge score-${risk.tone}`}><span>Security score</span><strong>{website.score ?? "—"}</strong></div>
       </div>
-
-      <div className="mt-5 flex gap-3">
-
-        <Button
-          onClick={() => onScan(website.id)}
-        >
-          Scan Website
-        </Button>
-
-        <Button
-          variant="danger"
-          onClick={() => onDelete(website.id)}
-        >
-          Delete Now
-        </Button>
-
+      <div className="website-card-actions">
+        <Button onClick={() => onScan(website.id)}>Open scan preview</Button>
+        <Button variant="danger" onClick={() => onDelete(website.id)}>Delete</Button>
       </div>
-
-    </div>
+    </article>
   );
 }
-
 export default WebsiteCard;

@@ -1,97 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import Button from "../components/Button";
+import Input from "../components/Input";
+import Loader from "../components/Loader";
+import { loginUser } from "../services/authService";
+import { validateLogin } from "../utils/validation";
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const { login } = useAuth();
-
-  const navigate = useNavigate();
-
-  function handleSubmit(event) {
-    event.preventDefault();
-
-    setLoading(true);
-    setError("");
-
-    // Temporary login simulation.
-    // Later this will be a fetch() request
-    // to our backend.
-
-    setTimeout(() => {
-      if (!email || !password) {
-        setError("Please enter email and password.");
-        setLoading(false);
-        return;
-      }
-
-      login();
-
-      setLoading(false);
-
-      navigate("/dashboard");
-    }, 1000);
+  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [errors, setErrors] = useState({}); const [requestError, setRequestError] = useState(""); const [loading, setLoading] = useState(false);
+  const navigate = useNavigate(); const { supabaseConfigured } = useAuth();
+  async function handleSubmit(event) {
+    event.preventDefault(); const nextErrors = validateLogin({ email, password }); setErrors(nextErrors); setRequestError(""); if (Object.keys(nextErrors).length) return;
+    try { setLoading(true); await loginUser({ email, password }); navigate("/dashboard"); } catch (error) { setRequestError(error.message || "Login failed."); } finally { setLoading(false); }
   }
-
-  return (
-    <div>
-      <h1>Login</h1>
-
-      <p>Welcome back to AI Cyber Tracker.</p>
-
-      {error && (
-        <p>{error}</p>
-      )}
-
-      <form onSubmit={handleSubmit}>
-
-        <div>
-          <label htmlFor="email">
-            Email
-          </label>
-
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(event) =>
-              setEmail(event.target.value)
-            }
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password">
-            Password
-          </label>
-
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(event) =>
-              setPassword(event.target.value)
-            }
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-        >
-          {loading
-            ? "Logging in..."
-            : "Login"}
-        </button>
-
-      </form>
-    </div>
-  );
+  return <main className="auth-page"><section className="auth-card"><Link className="back-link" to="/">← Back to home</Link><p className="eyebrow">Supabase Auth</p><h1>Login</h1><p className="muted">Your browser signs in with Supabase. The Express API still verifies the access token on every protected request.</p>{!supabaseConfigured ? <p className="alert alert-error">Supabase client environment variables are missing.</p> : null}{requestError ? <p className="alert alert-error" role="alert">{requestError}</p> : null}<form className="stack-form" onSubmit={handleSubmit} noValidate><Input id="email" label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} required/><Input id="password" label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} required/><Button type="submit" disabled={loading || !supabaseConfigured}>{loading ? <Loader label="Logging in..." compact/> : "Login"}</Button></form><p className="auth-switch">New here? <Link to="/register">Create an account</Link></p></section></main>;
 }
-
 export default Login;

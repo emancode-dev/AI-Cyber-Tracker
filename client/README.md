@@ -1,16 +1,10 @@
-# React + Vite
+# AI Cyber Tracker Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite frontend through Day 20.
 
-Currently, two official plugins are available:
+- Supabase Auth runs in the browser.
+- Protected API requests send the current Supabase access token to Express.
+- Website CRUD is handled by Express, not direct frontend table writes.
+- The Scan page renders standardized preview findings until the protected scan-start endpoint is introduced on Day 21.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+See the root README and `docs/supabase-setup.md`.
