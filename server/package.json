@@ -1,0 +1,19 @@
+{
+  "name": "ai-cyber-tracker-server",
+  "private": true,
+  "version": "0.3.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file=.env --watch src/app.js",
+    "start": "node --env-file=.env src/app.js",
+    "practice:day6": "node --env-file=.env src/practice/day6.js",
+    "scanner:test": "node --env-file=.env src/practice/runScanner.js",
+    "ai:payload": "node --env-file=.env src/practice/previewAIContext.js",
+    "ai:test": "node --env-file=.env src/practice/testOpenRouter.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "express": "^5.1.0"
+  }
+}
