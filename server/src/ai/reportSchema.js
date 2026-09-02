@@ -1,24 +1,25 @@
 export const AI_REPORT_SHAPE = Object.freeze({
   summary: "string",
   score: "number (must exactly match supplied deterministic score)",
-  priorities: [
-    {
-      findingCode: "one supplied finding code",
-      explanation: "string"
-    }
-  ],
+  priorities: [{ findingCode: "one supplied finding code", explanation: "string" }],
   roadmap: {
-    today: ["string"],
-    thisWeek: ["string"],
-    thisMonth: ["string"]
+    today: [{ sourceType: "finding|owner_context", sourceCode: "allowed source code", action: "string" }],
+    thisWeek: [{ sourceType: "finding|owner_context", sourceCode: "allowed source code", action: "string" }],
+    thisMonth: [{ sourceType: "finding|owner_context", sourceCode: "allowed source code", action: "string" }]
   },
-  manualReview: [
-    {
-      findingCode: "one supplied finding code",
-      reason: "string"
-    }
-  ]
+  manualReview: [{ findingCode: "one supplied finding code", reason: "string" }]
 });
+
+const roadmapItem = {
+  type: "object",
+  additionalProperties: false,
+  required: ["sourceType", "sourceCode", "action"],
+  properties: {
+    sourceType: { type: "string", enum: ["finding", "owner_context"] },
+    sourceCode: { type: "string", minLength: 1, maxLength: 120 },
+    action: { type: "string", minLength: 1, maxLength: 300 }
+  }
+};
 
 export const AI_REPORT_JSON_SCHEMA = Object.freeze({
   name: "cyber_tracker_report",
@@ -37,9 +38,9 @@ export const AI_REPORT_JSON_SCHEMA = Object.freeze({
       roadmap: {
         type: "object", additionalProperties: false, required: ["today", "thisWeek", "thisMonth"],
         properties: {
-          today: { type: "array", maxItems: 6, items: { type: "string", minLength: 1, maxLength: 300 } },
-          thisWeek: { type: "array", maxItems: 8, items: { type: "string", minLength: 1, maxLength: 300 } },
-          thisMonth: { type: "array", maxItems: 8, items: { type: "string", minLength: 1, maxLength: 300 } }
+          today: { type: "array", maxItems: 6, items: roadmapItem },
+          thisWeek: { type: "array", maxItems: 8, items: roadmapItem },
+          thisMonth: { type: "array", maxItems: 8, items: roadmapItem }
         }
       },
       manualReview: {

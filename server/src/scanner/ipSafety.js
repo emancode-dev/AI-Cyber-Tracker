@@ -68,21 +68,63 @@ function parseIPv6Bytes(rawIp) {
   return bytes;
 }
 
+function inCidr6(bytes, base, prefix) {
+  const baseBytes = parseIPv6Bytes(base);
+  if (!baseBytes) return false;
+  const fullBytes = Math.floor(prefix / 8);
+  const remainingBits = prefix % 8;
+  for (let index = 0; index < fullBytes; index += 1) {
+    if (bytes[index] !== baseBytes[index]) return false;
+  }
+  if (!remainingBits) return true;
+  const mask = (0xff << (8 - remainingBits)) & 0xff;
+  return (bytes[fullBytes] & mask) === (baseBytes[fullBytes] & mask);
+}
+
+function embeddedIPv4(bytes, offset = 12) {
+  return bytes.slice(offset, offset + 4).join(".");
+}
+
 function unsafeIPv6Reason(ip) {
   const bytes = parseIPv6Bytes(ip);
   if (!bytes) return "invalid IPv6 address";
+
   if (bytes.every((byte) => byte === 0)) return "unspecified";
   if (bytes.slice(0, 15).every((byte) => byte === 0) && bytes[15] === 1) return "loopback";
-  if ((bytes[0] & 0xfe) === 0xfc) return "unique-local";
-  if (bytes[0] === 0xfe && (bytes[1] & 0xc0) === 0x80) return "link-local";
-  if (bytes[0] === 0xff) return "multicast";
-  if (bytes[0] === 0x20 && bytes[1] === 0x01 && bytes[2] === 0x0d && bytes[3] === 0xb8) return "documentation";
 
+  // IPv4-mapped and deprecated IPv4-compatible encodings are interpreted rather
+  // than trusted as ordinary IPv6. This closes alternate-notation SSRF bypasses.
   const mappedPrefix = bytes.slice(0, 10).every((byte) => byte === 0) && bytes[10] === 0xff && bytes[11] === 0xff;
-  if (mappedPrefix) {
-    const mapped = bytes.slice(12).join(".");
-    return unsafeIPv4Reason(mapped);
+  if (mappedPrefix) return unsafeIPv4Reason(embeddedIPv4(bytes));
+
+  const compatiblePrefix = bytes.slice(0, 12).every((byte) => byte === 0);
+  if (compatiblePrefix) return unsafeIPv4Reason(embeddedIPv4(bytes)) || "IPv4-compatible special-purpose";
+
+  // Translation/tunnelling ranges can encode an IPv4 destination. Blocking the
+  // special-purpose range avoids letting a public-looking IPv6 literal tunnel to
+  // a private/metadata IPv4 target through infrastructure outside our control.
+  if (inCidr6(bytes, "64:ff9b::", 96)) return "IPv4/IPv6 translation";
+  if (inCidr6(bytes, "64:ff9b:1::", 48)) return "local-use IPv4/IPv6 translation";
+  if (inCidr6(bytes, "2001::", 32)) return "Teredo transition";
+  if (inCidr6(bytes, "2002::", 16)) return "6to4 transition";
+
+  const specialRanges = [
+    ["100::", 64, "discard-only"],
+    ["100:0:0:1::", 64, "dummy prefix"],
+    ["2001:2::", 48, "benchmark"],
+    ["2001:10::", 28, "deprecated ORCHID"],
+    ["2001:db8::", 32, "documentation"],
+    ["3fff::", 20, "documentation"],
+    ["5f00::", 16, "segment-routing special-purpose"],
+    ["fc00::", 7, "unique-local"],
+    ["fe80::", 10, "link-local"],
+    ["fec0::", 10, "deprecated site-local"],
+    ["ff00::", 8, "multicast"]
+  ];
+  for (const [base, prefix, reason] of specialRanges) {
+    if (inCidr6(bytes, base, prefix)) return reason;
   }
+
   return null;
 }
 

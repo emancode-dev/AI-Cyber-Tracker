@@ -5,7 +5,7 @@ import {
 } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell,
+  Bar, BarChart, CartesianGrid, Cell,
   ResponsiveContainer, Tooltip, XAxis, YAxis
 } from "recharts";
 import Button from "../Button";
@@ -87,17 +87,19 @@ function DashboardOverview({ websites = [], summaryData = null, loading = false,
 
       <section className="em-command-grid">
         <article className="dashboard-v2-panel em-chart-panel">
-          <div className="dashboard-v2-panel-heading"><div><small>SECURITY TRAJECTORY</small><h3>Score movement</h3></div><span><TrendUp /> {demo ? "Preview data" : `${trendValues.length} retained assessments`}</span></div>
-          <div className="em-chart-wrap" aria-label="Security score trend chart">
+          <div className="dashboard-v2-panel-heading"><div><small>RECENT ASSESSMENTS</small><h3>Independent assessment scores</h3></div><span><TrendUp /> {demo ? "Preview data" : `${trendValues.length} retained assessments`}</span></div>
+          <p className="muted tiny-note">Each bar is one assessment and may belong to a different website. Use History for a single website&apos;s comparable before/after trend.</p>
+          <div className="em-chart-wrap" aria-label="Recent assessment score chart">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData} margin={{ top: 12, right: 16, left: -26, bottom: 0 }}>
-                <defs><linearGradient id="emeraldArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#55f5b3" stopOpacity={0.3}/><stop offset="100%" stopColor="#55f5b3" stopOpacity={0}/></linearGradient></defs>
+              <BarChart data={trendData} margin={{ top: 12, right: 16, left: -26, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(166,255,218,.06)" vertical={false} />
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#5f786d", fontSize: 9 }} />
                 <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: "#5f786d", fontSize: 9 }} />
-                <Tooltip contentStyle={{ background: "#07160f", border: "1px solid rgba(85,245,179,.18)", borderRadius: 10, fontSize: 11 }} />
-                <Area type="monotone" dataKey="score" stroke="#55f5b3" strokeWidth={2.4} fill="url(#emeraldArea)" activeDot={{ r: 4, fill: "#ecfff7" }} />
-              </AreaChart>
+                <Tooltip formatter={(value, _name, item) => [`${value}`, item?.payload?.website || "Assessment"]} contentStyle={{ background: "#07160f", border: "1px solid rgba(85,245,179,.18)", borderRadius: 10, fontSize: 11 }} />
+                <Bar dataKey="score" radius={[4, 4, 0, 0]}>
+                  {trendData.map((entry, index) => <Cell key={`${entry.website || "demo"}-${entry.label}-${index}`} fill={CHART_COLORS[getRiskLabel(entry.score).key]} />)}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </article>
@@ -115,7 +117,7 @@ function DashboardOverview({ websites = [], summaryData = null, loading = false,
           <div className="mini-scan-table-v2">
             {websites.slice(0, 6).map((website) => {
               const risk = getRiskLabel(website.score);
-              return <button type="button" key={website.id} onClick={() => onScan?.(website.id)}><span><i className={`status-dot status-${risk.key}`}/><b>{website.name}</b><small>{website.url}</small></span><strong>{website.score ?? "—"}</strong><em>{risk.label}</em><small>{website.latest_scan_status || "Not scanned"}</small><ArrowRight /></button>;
+              return <button type="button" key={website.id} onClick={() => onScan?.(website.id)}><span><i className={`status-dot status-${risk.key}`}/><b>{website.name}</b><small>{website.url}</small></span><strong>{website.score ?? "—"}</strong><em>{risk.label}</em><small>{website.latest_scan_status || (typeof website.score === "number" ? "Evidence expired" : "Not scanned")}</small><ArrowRight /></button>;
             })}
             {!websites.length ? <div className="dashboard-v2-empty">No website activity yet.</div> : null}
           </div>

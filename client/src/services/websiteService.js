@@ -34,3 +34,8 @@ export async function getWebsiteHistory(id) {
   const response = await apiRequest(`/websites/${id}/history`);
   return response.data.history;
 }
+
+export async function getWebsiteFindingHistory(id) {
+  const response = await apiRequest(`/websites/${id}/finding-history`);
+  return response.data.history;
+}

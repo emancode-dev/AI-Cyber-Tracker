@@ -9,7 +9,7 @@ export const STATUS_FACTORS = Object.freeze({
   passed: 0,
   observed: 0,
   needs_attention: 1,
-  manual_review: 0.6
+  manual_review: 0
 });
 
 export const CONFIDENCE_FACTORS = Object.freeze({

@@ -12,3 +12,14 @@ test("allows ordinary public addresses", () => {
   assert.equal(isUnsafeAddress("8.8.8.8"), false);
   assert.equal(isUnsafeAddress("1.1.1.1"), false);
 });
+
+test("blocks IPv6 transition and special-purpose ranges that can bypass private-address checks", () => {
+  for (const ip of ["::7f00:1", "64:ff9b::7f00:1", "64:ff9b:1::1", "100::1", "fec0::1", "2001::1", "2002:7f00:1::", "3fff::1", "5f00::1"]) {
+    assert.equal(isUnsafeAddress(ip), true, ip);
+  }
+});
+
+test("allows ordinary global IPv6 addresses", () => {
+  assert.equal(isUnsafeAddress("2606:4700:4700::1111"), false);
+  assert.equal(isUnsafeAddress("2001:4860:4860::8888"), false);
+});

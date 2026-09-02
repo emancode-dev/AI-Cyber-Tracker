@@ -4,8 +4,8 @@ import { buildDashboardSummary } from "../src/services/dashboardService.js";
 
 test("dashboard summary uses chronological retained history and current website scores", () => {
   const websites = [
-    { id: "a", name: "Alpha", url: "https://a.test/", score: 52, latest_scan_id: "s1" },
-    { id: "b", name: "Beta", url: "https://b.test/", score: 88, latest_scan_id: "s2" },
+    { id: "a", name: "Alpha", url: "https://a.test/", score: 52, latest_scan_id: "s1", latest_category_scores: { headers: 60 } },
+    { id: "b", name: "Beta", url: "https://b.test/", score: 88, latest_scan_id: "s2", latest_category_scores: { headers: 80 } },
     { id: "c", name: "Gamma", url: "https://c.test/", score: null }
   ];
   const history = [
@@ -17,6 +17,8 @@ test("dashboard summary uses chronological retained history and current website 
   assert.equal(summary.metrics.portfolioScore, 70);
   assert.deepEqual(summary.metrics.riskCounts, { low: 1, medium: 0, high: 1, unscanned: 1 });
   assert.deepEqual(summary.trend.map((point) => point.score), [44, 52, 88]);
+  assert.equal(summary.trend[0].methodologyComparableToPrevious, null);
+  assert.equal(summary.trend[2].methodologyComparableToPrevious, null, "a different website must not be compared to the previous portfolio event");
   assert.equal(summary.priorityWatchlist[0].websiteId, "a");
   assert.equal(summary.categoryAverages[0].score, 70);
   assert.equal(summary.notifications.length, 1);

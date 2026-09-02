@@ -2,21 +2,44 @@ import { env } from "../config/env.js";
 import { buildSafeAIContext } from "../ai/contextBuilder.js";
 import { buildReportMessages } from "../ai/systemPrompt.js";
 import { callOpenRouter } from "../ai/openRouterClient.js";
+import { calculateScore } from "../risk/calculateScore.js";
 import { FINDING_CODES } from "../../../shared/findingCodes.js";
 
-const fakeScore = 72;
-const fakeContext = buildSafeAIContext({
-  score: fakeScore,
-  riskLevel: "medium",
-  findings: [
-    { code: FINDING_CODES.HSTS_MISSING },
-    { code: FINDING_CODES.CSP_MISSING }
-  ],
-  answers: {
-    APP_HAS_LOGIN: true,
-    HAS_ADMIN_AREA: false
+const findings = [
+  {
+    code: FINDING_CODES.HSTS_MISSING,
+    category: "headers",
+    severity: "medium",
+    status: "needs_attention",
+    title: "HSTS not observed",
+    remediation: "Add a durable HSTS policy after confirming HTTPS readiness.",
+    verification: "Rescan and confirm Strict-Transport-Security is present.",
+    standards: { owaspTop10: ["A02:2025"], asvs: ["v5.0.0-3.4.1"], wstg: [] }
+  },
+  {
+    code: FINDING_CODES.CSP_MISSING,
+    category: "headers",
+    severity: "medium",
+    status: "needs_attention",
+    title: "Content Security Policy not observed",
+    remediation: "Design and deploy a restrictive Content-Security-Policy.",
+    verification: "Rescan and confirm Content-Security-Policy is present.",
+    standards: { owaspTop10: ["A02:2025"], asvs: ["v5.0.0-3.4.3"], wstg: [] }
   }
+];
+
+const answers = {
+  APP_HAS_LOGIN: true,
+  HAS_ADMIN_AREA: false
+};
+
+const analysis = calculateScore(findings, answers, {
+  scopeCoveragePercent: 40,
+  independentlyObservedPercent: 40,
+  untestedAreas: ["server-side authorization correctness"]
 });
+
+const fakeContext = buildSafeAIContext({ analysis, findings, answers });
 
 console.log("Safe fake payload:");
 console.log(JSON.stringify(fakeContext, null, 2));
@@ -36,12 +59,10 @@ const result = await callOpenRouter({
 console.log(`\nModel: ${result.model}`);
 console.log(result.content);
 
-// Day 29 lightweight grounding smoke check. Full production output validation
-// belongs to Day 31.
 try {
   const parsed = JSON.parse(result.content);
-  if (parsed.score !== fakeScore) {
-    throw new Error("Model changed the deterministic score.");
+  if (parsed.score !== analysis.score) {
+    throw new Error("Model changed the deterministic external posture score.");
   }
 
   const allowed = new Set(fakeContext.findingCodes);

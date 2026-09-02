@@ -1,16 +1,16 @@
 # AI Cyber Tracker — Emerald Edition
 
-This build completes the 40-day learn-by-building plan with a redesigned dark-emerald React experience, Supabase Auth/PostgreSQL/RLS, protected passive scanning, an adaptive questionnaire, deterministic scoring, validated OpenRouter explanations, score history and privacy-first retention.
+This build extends the 40-day learn-by-building project with a trust-focused refinement: backend-only assessment writes, sanitized evidence provenance, stronger scanner correlation, separate external-posture/context risk, scope coverage, finding lifecycle history, validated OpenRouter explanations and privacy-first retention.
 
 ## What is implemented
 
 - Reference-led emerald landing page with a real animated COBE globe, continuously moving signal rail, world activity map, cursor-reactive cards and responsive dashboard preview.
 - Branded signup/login pages, protected routes, dashboard navigation, account/privacy card, charts, report history and settings.
-- Supabase Auth, ownership checks in Express and row-level security in PostgreSQL.
-- Passive SSRF-hardened scanner with normalized findings, timeouts, redirect validation, body limits and scan rate limiting.
-- Controlled 15–25 question adaptive questionnaire and reproducible deterministic risk engine.
-- Server-only OpenRouter request using minimized evidence, JSON Schema output, strict score/finding validation, timeout/retry and deterministic fallback.
-- Today / This Week / This Month report, local JSON export, Delete Now, 48-hour detailed-data expiry, lightweight score history and before/after category comparison.
+- Supabase Auth, ownership checks in Express, RLS for owner-scoped reads, and backend-only trusted writes for scanner-generated facts.
+- Passive SSRF-hardened scanner with normalized findings, sanitized observations, rule provenance, deterministic remediation, stronger header/cookie classification, timeouts, redirect validation, body limits and scan rate limiting.
+- Controlled 15–25 question adaptive questionnaire; deterministic external-posture score; separate owner-context risk, overall priority and assessment coverage.
+- Server-only OpenRouter request using minimized facts, strict score/finding validation, timeout/retry and deterministic fallback. The model is an explanation layer, never the score authority.
+- Today / This Week / This Month report, local JSON export, Delete Now, 48-hour detailed-data expiry, lightweight score history, and durable new/existing/resolved/regressed finding lifecycle comparison.
 
 The public `/preview/dashboard` route uses realistic illustrative data so the visual frontend can be reviewed without a configured account. Authenticated `/dashboard` uses live API data.
 
@@ -33,7 +33,7 @@ Local frontend: `http://localhost:5173`
 
 ## Supabase
 
-Preview and apply all unapplied migrations, including `202608300007_ai_reports_history_retention.sql`:
+Preview and apply all unapplied migrations, through `202609020010_reliability_state_machine.sql`:
 
 ```bash
 npx supabase login
@@ -42,17 +42,9 @@ npx supabase db push --dry-run
 npx supabase db push
 ```
 
-Schedule the included cleanup function after enabling Supabase Cron:
+Migration 010 schedules cleanup/recovery with Supabase Cron automatically on the hosted project. Verify the jobs after `db push`; do not add a duplicate manual schedule.
 
-```sql
-select cron.schedule(
-  'cleanup-expired-cyber-assessments',
-  '17 * * * *',
-  $$select public.cleanup_expired_assessment_data();$$
-);
-```
-
-Keep `OPENROUTER_API_KEY` only in `server/.env` or the backend host's encrypted environment. Never use it in the Vite frontend.
+Keep `OPENROUTER_API_KEY` and `SUPABASE_SECRET_KEY` only in `server/.env` or the backend host's encrypted environment. Never use either secret in the Vite frontend.
 
 ## Verification
 
@@ -65,6 +57,9 @@ npm --prefix client run build
 
 ## Documentation
 
+- `docs/FINAL_HARDENING_2026-09-02.md`
+- `docs/REFINEMENT_IMPLEMENTATION_2026-09.md`
+- `docs/IMPLEMENTATION_EVALUATION_2026-09.md`
 - `docs/IMPLEMENTATION_AND_HANDOFF.md`
 - `docs/LOCAL_SETUP_SUPABASE_DEPLOY_GIT.md`
 - `docs/emerald-ui-library-research.md`
