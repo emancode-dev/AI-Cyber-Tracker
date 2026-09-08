@@ -1,4 +1,5 @@
 import {
+  getLatestScanStatus,
   getLatestScoredScan,
   getWebsite,
   insertWebsite,
@@ -22,13 +23,18 @@ export async function getAllWebsites(supabase) {
 
   return Promise.all(
     websites.map(async (website) => {
-      const latest = await getLatestScoredScan(supabase, website.id);
+      const [latest, latestAny] = await Promise.all([
+        getLatestScoredScan(supabase, website.id),
+        getLatestScanStatus(supabase, website.id)
+      ]);
+      const scorePending = Boolean(latestAny && latestAny.id !== latest?.id && latestAny.score === null);
       return {
         ...website,
         score: latest?.score ?? null,
         risk_level: latest?.risk_level ?? null,
-        latest_scan_status: latest?.status ?? null,
-        latest_scan_id: latest?.id ?? null
+        latest_scan_status: latestAny?.status ?? latest?.status ?? null,
+        latest_scan_id: latest?.id ?? null,
+        score_pending: scorePending
       };
     })
   );

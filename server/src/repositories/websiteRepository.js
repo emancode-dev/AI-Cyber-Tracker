@@ -53,6 +53,21 @@ export async function getLatestScoredScan(supabase, websiteId) {
   return data;
 }
 
+export async function getLatestScanStatus(supabase, websiteId) {
+  const { data, error } = await supabase
+    .from("scans")
+    .select("id,status,score,created_at")
+    .eq("website_id", websiteId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw mapDatabaseError(error, "Could not load the latest scan status.");
+  }
+  return data;
+}
+
 export async function insertWebsite(supabase, values) {
   const { data, error } = await supabase
     .from("websites")
