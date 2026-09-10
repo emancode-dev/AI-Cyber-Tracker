@@ -12,6 +12,10 @@
     "ai:test": "npm --prefix server run ai:test",
     "test:ui-design": "node scripts/check-premium-ui.mjs"
   },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "express": "^5.1.0"
+  },
   "devDependencies": {
     "supabase": "^2.116.0"
   }

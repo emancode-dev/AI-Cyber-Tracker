@@ -23,6 +23,8 @@ import {
     CanvasTexture,
 } from "three";
 import { geoEquirectangular, geoPath } from "d3-geo";
+import { feature } from "topojson-client";
+import landAtlas from "world-atlas/land-50m.json";
 
 type Rgba = { r: number; g: number; b: number; a: number };
 
@@ -445,9 +447,12 @@ export default function Globe({
         const loadWorldData = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch("/ne_50m_land.json");
-                if (!response.ok) throw new Error("Failed to load land data");
-                const landFeatures = await response.json();
+                // Bundle the existing world-atlas dependency so the globe does
+                // not rely on a separate runtime asset request.
+                const landFeatures = feature(
+                    landAtlas as any,
+                    (landAtlas as any).objects.land
+                ) as any;
 
                 while (continentOutlineGroup.children.length > 0) {
                     continentOutlineGroup.remove(

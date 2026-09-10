@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+.git/
+client/
+docs/
+scripts/
+supabase/
+server/.env
+server/.env.*
+!server/.env.example
+server/node_modules/
+server/test/
+server/tests/
+server/src/practice/
+*.log
