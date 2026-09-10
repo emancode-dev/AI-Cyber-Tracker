@@ -41,8 +41,8 @@ export function useEmeraldMotion(rootRef) {
 
     const context = gsap.context(() => {
       root.querySelectorAll(".em-hero h1, .em-section-heading h2, .em-final-cta h2").forEach((element, index) => {
-        const characters = splitText(element, "char");
-        gsap.fromTo(characters, { y: "0.75em", opacity: 0, rotateX: -70 }, { y: 0, opacity: 1, rotateX: 0, duration: .72, stagger: .012, ease: "power3.out", delay: index === 0 ? .18 : 0, scrollTrigger: index === 0 ? undefined : { trigger: element, start: "top 88%", once: true } });
+        const words = splitText(element, "word");
+        gsap.fromTo(words, { y: "0.75em", opacity: 0, rotateX: -70 }, { y: 0, opacity: 1, rotateX: 0, duration: .72, stagger: .06, ease: "power3.out", delay: index === 0 ? .18 : 0, scrollTrigger: index === 0 ? undefined : { trigger: element, start: "top 88%", once: true } });
       });
       root.querySelectorAll(".em-section-heading > p").forEach((element) => {
         const words = splitText(element, "word");

@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const migrationPath = path.resolve(here, "../../supabase/migrations/202609020010_reliability_state_machine.sql");
 const sql = fs.readFileSync(migrationPath, "utf8");
+const pendingStateMigrationPath = path.resolve(here, "../../supabase/migrations/202609090011_dashboard_pending_scan_state.sql");
+const pendingStateSql = fs.readFileSync(pendingStateMigrationPath, "utf8");
 
 test("questionnaire writes are backend-only and revision-locked", () => {
   assert.match(sql, /revoke insert, update, delete on public\.answers from authenticated/i);
@@ -38,6 +40,17 @@ test("shared quota and scheduled cleanup/recovery are configured", () => {
 test("dashboard current score comes from durable score history", () => {
   assert.match(sql, /from public\.score_history h/i);
   assert.match(sql, /left join public\.scans s on s\.id = sh\.scan_id/i);
+});
+
+test("dashboard pending state preserves durable scores and owner-scoped reads", () => {
+  assert.match(pendingStateSql, /from public\.score_history h/i);
+  assert.match(pendingStateSql, /h\.user_id = \(select auth\.uid\(\)\)/i);
+  assert.match(pendingStateSql, /where w\.user_id = \(select auth\.uid\(\)\)/i);
+  assert.match(pendingStateSql, /latest_scan\.status in \('queued', 'scanning', 'waiting_for_answers', 'analyzing'\)/i);
+  assert.match(pendingStateSql, /latest_scan\.id is distinct from sh\.scan_id/i);
+  assert.match(pendingStateSql, /score_pending boolean/i);
+  assert.match(pendingStateSql, /security invoker/i);
+  assert.match(pendingStateSql, /revoke execute[\s\S]*from public, anon/i);
 });
 
 

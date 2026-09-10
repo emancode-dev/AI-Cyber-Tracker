@@ -48,7 +48,7 @@ Never expose `SUPABASE_SECRET_KEY` or `OPENROUTER_API_KEY` to Vite/browser varia
 
 ## Required migrations
 
-Apply all migrations through `202609020010_reliability_state_machine.sql`:
+Apply all migrations through `202609090011_dashboard_pending_scan_state.sql`:
 
 ```bash
 npx supabase db push --dry-run
@@ -57,6 +57,7 @@ npx supabase migration list
 ```
 
 Migration 010 installs/schedules the Cron jobs itself on Supabase hosted Postgres; do not create duplicate cleanup schedules manually.
+Migration 011 keeps retained scores authoritative while reporting a newer in-progress assessment to the dashboard.
 
 ## Release verification
 

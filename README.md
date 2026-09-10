@@ -33,7 +33,7 @@ Local frontend: `http://localhost:5173`
 
 ## Supabase
 
-Preview and apply all unapplied migrations, through `202609020010_reliability_state_machine.sql`:
+Preview and apply all unapplied migrations, through `202609090011_dashboard_pending_scan_state.sql`:
 
 ```bash
 npx supabase login
@@ -42,7 +42,7 @@ npx supabase db push --dry-run
 npx supabase db push
 ```
 
-Migration 010 schedules cleanup/recovery with Supabase Cron automatically on the hosted project. Verify the jobs after `db push`; do not add a duplicate manual schedule.
+Migration 010 schedules cleanup/recovery with Supabase Cron automatically on the hosted project. Migration 011 adds live pending-scan status without replacing durable retained scores. Verify the jobs after `db push`; do not add a duplicate manual schedule.
 
 Keep `OPENROUTER_API_KEY` and `SUPABASE_SECRET_KEY` only in `server/.env` or the backend host's encrypted environment. Never use either secret in the Vite frontend.
 

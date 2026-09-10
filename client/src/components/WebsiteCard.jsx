@@ -12,7 +12,10 @@ function WebsiteCard({ website, onDelete, onScan = () => {}, onEdit }) {
           <p className="muted break-word">{website.url}</p>
           <p className="tiny-note">Authorization confirmed {website.authorization_confirmed ? "✓" : "—"}</p>
         </div>
-        <div className={`score-badge score-${risk.tone}`}><span>Security score</span><strong>{website.score ?? "—"}</strong></div>
+        <div className={`score-badge score-${website.score_pending ? "neutral" : risk.tone}`}>
+          <span>Security score</span>
+          <strong>{website.score_pending ? "Scanning…" : website.score ?? "—"}</strong>
+        </div>
       </div>
       <div className="website-card-actions">
         <Button onClick={() => onScan(website.id)}>Start / open scan</Button>

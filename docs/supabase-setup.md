@@ -2,7 +2,7 @@
 
 Use the migrations in `supabase/migrations/`; do not manually recreate schema objects.
 
-## Apply through migration 010
+## Apply through migration 011
 
 ```bash
 npx supabase db push --dry-run
@@ -14,9 +14,10 @@ Current reliability migration:
 
 ```text
 202609020010_reliability_state_machine.sql
+202609090011_dashboard_pending_scan_state.sql
 ```
 
-It adds answer revisions, immutable analysis snapshots, atomic scanner/analysis RPCs, backend-only answer mutation, shared scan quotas, the durable dashboard RPC, report fingerprints, cleanup scheduling and stale-scan recovery.
+Migration 010 adds answer revisions, immutable analysis snapshots, atomic scanner/analysis RPCs, backend-only answer mutation, shared scan quotas, the durable dashboard RPC, report fingerprints, cleanup scheduling and stale-scan recovery. Migration 011 preserves that durable score source while exposing whether a newer assessment is still pending.
 
 ## Environment split
 

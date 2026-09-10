@@ -74,10 +74,10 @@ npx supabase db push
 Apply every migration through:
 
 ```text
-supabase/migrations/202609020010_reliability_state_machine.sql
+supabase/migrations/202609090011_dashboard_pending_scan_state.sql
 ```
 
-The latest migrations harden trusted writes, atomic state transitions, durable history, shared scan quotas and scheduled cleanup/recovery.
+The latest migrations harden trusted writes, atomic state transitions, durable history, shared scan quotas and scheduled cleanup/recovery, then add live pending-scan status without replacing retained scores.
 
 Migration 010 schedules the cleanup and stale-scan recovery Cron jobs. Verify them with `select jobid, jobname, schedule, command, active from cron.job;` and do not create duplicate schedules.
 

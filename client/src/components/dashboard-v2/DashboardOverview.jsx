@@ -64,6 +64,14 @@ function DashboardOverview({ websites = [], summaryData = null, loading = false,
   const priority = demo ? [...scoredWebsites].sort((a, b) => a.score - b.score).slice(0, 4) : (summaryData?.priorityWatchlist || []);
   const categories = demo ? [{ category: "headers", score: 72, sampleSize: 4 }, { category: "transport", score: 83, sampleSize: 4 }, { category: "cookies", score: 64, sampleSize: 3 }, { category: "metadata", score: 78, sampleSize: 4 }] : (summaryData?.categoryAverages || []);
 
+  if (loading && !summaryData) {
+    return (
+      <div className="dashboard-v2-page em-dashboard-page">
+        <Loader label="Loading your dashboard..." />
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-v2-page em-dashboard-page">
       <section className="dashboard-v2-intro em-dashboard-intro">

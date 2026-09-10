@@ -19,22 +19,33 @@ function HistoryPage() {
   const [selected, setSelected] = useState("");
   const [history, setHistory] = useState([]);
   const [findingHistory, setFindingHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingWebsites, setLoadingWebsites] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => { getWebsites().then((items) => { setWebsites(items); setSelected(items[0]?.id || ""); }).catch((err) => setError(err.message)).finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    getWebsites()
+      .then((items) => {
+        const initialWebsiteId = items[0]?.id || "";
+        setWebsites(items);
+        setLoadingHistory(Boolean(initialWebsiteId));
+        setSelected(initialWebsiteId);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoadingWebsites(false));
+  }, []);
   useEffect(() => {
     if (!selected) return undefined;
     let active = true;
-    setLoading(true);
     Promise.all([getWebsiteHistory(selected), getWebsiteFindingHistory(selected)])
       .then(([scoreItems, findingItems]) => { if (active) { setHistory(scoreItems); setFindingHistory(findingItems); } })
       .catch((err) => { if (active) setError(err.message); })
-      .finally(() => { if (active) setLoading(false); });
+      .finally(() => { if (active) setLoadingHistory(false); });
     return () => { active = false; };
   }, [selected]);
 
-  function selectWebsite(event) { setError(""); setSelected(event.target.value); }
+  function selectWebsite(event) { setError(""); setLoadingHistory(true); setSelected(event.target.value); }
+  const loading = loadingWebsites || loadingHistory;
   const previous = history.at(-2);
   const latest = history.at(-1);
   const methodologyComparable = Boolean(previous && latest && methodologyKey(previous) === methodologyKey(latest));
