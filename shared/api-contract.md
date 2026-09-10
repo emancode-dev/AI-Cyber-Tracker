@@ -24,7 +24,7 @@ Error:
 ## Public
 
 ### GET `/api/health`
-Reports API status and booleans showing whether Supabase/OpenRouter environment configuration is present. No secrets are returned.
+Returns only `{ status: "ok", service: "ai-cyber-tracker-api" }`; dependency configuration is not advertised publicly.
 
 ## Authenticated website routes
 
@@ -57,10 +57,10 @@ Requires website ownership, rate-limit allowance, and:
 { "authorizationConfirmed": true }
 ```
 
-Runs the safe passive scanner and persists normalized findings. Successful technical scan state becomes `waiting_for_answers`.
+Runs the safe passive scanner and persists normalized findings plus sanitized observations through the backend-only trusted writer. Successful technical scan state becomes `waiting_for_answers`. Browser-authenticated users cannot directly fabricate scanner-owned rows.
 
 ### GET `/api/scans/:id`
-Returns one owned scan and its persisted normalized findings.
+Returns one owned scan, persisted normalized findings, and sanitized observations.
 
 ## Days 22–24 questionnaire
 
@@ -77,20 +77,20 @@ Returns the currently applicable controlled questions, saved answers, and progre
 }
 ```
 
-Server validates code, applicability, type, and allowed values before persistence.
+Server validates code, applicability, type, and allowed values. Persistence uses a backend-only revision-locked database function; completed assessments are immutable and concurrent stale saves receive a conflict.
 
 ## Days 25–27 deterministic analysis
 
 ### POST `/api/scans/:id/analyze`
-Requires a complete applicable questionnaire. Calculates deterministic score/category breakdown/context adjustments, saves `score` + `risk_level` on the scan, and returns the analysis.
+Requires a complete applicable questionnaire. Calculates the deterministic **external posture score** from scanner facts, calculates owner-context risk separately, derives overall priority and assessment coverage, and atomically persists an immutable analysis snapshot + minimal score/lifecycle history. Repeating analyze on a completed assessment returns the immutable result instead of creating a lifecycle event.
 
-AI is not used to calculate or alter the score.
+AI is not used to calculate or alter the score. Owner context changes priority, not scanner facts or the external score.
 
 ## Days 31–34 validated report, retention and history
 
 ### POST `/api/scans/:id/report`
 
-Creates or returns a cached report for an owned scored scan. OpenRouter receives only minimized allowlisted context. The response must pass local schema, score-lock and finding-code validation; failures return a deterministic report without losing the verified score/findings.
+Creates or returns a cached report for an owned scored scan. OpenRouter receives only minimized allowlisted context. The response must pass local schema, score-lock and source-code grounding validation. Every roadmap action cites a supplied finding or owner-context code. Provider failures return a retryable deterministic fallback without losing verified facts.
 
 ### GET `/api/scans/:id/report`
 
@@ -102,4 +102,8 @@ Deletes the owned scan and cascading detailed findings, answers and AI report. L
 
 ### GET `/api/websites/:id/history`
 
-Returns owner-scoped score, risk and broad category history for before/after UI.
+Returns owner-scoped external score, external risk, owner-context risk, overall priority, coverage, version metadata and category history for before/after UI.
+
+### GET `/api/websites/:id/finding-history`
+
+Returns minimal durable lifecycle events (`new`, `existing`, `resolved`, `regressed`) without restoring expired raw/detailed scan evidence.

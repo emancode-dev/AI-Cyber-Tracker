@@ -1,4 +1,4 @@
-function Input({ id, label, type = "text", value, onChange, placeholder = "", error = "", helpText = "", required = false, autoComplete, name }) {
+function Input({ id, label, type = "text", value, onChange, placeholder = "", error = "", helpText = "", required = false, autoComplete, name, ...inputProps }) {
   const errorId = error ? `${id}-error` : undefined;
   const helpId = helpText ? `${id}-help` : undefined;
   const describedBy = [errorId, helpId].filter(Boolean).join(" ") || undefined;
@@ -20,6 +20,7 @@ function Input({ id, label, type = "text", value, onChange, placeholder = "", er
         autoComplete={autoComplete}
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy}
+        {...inputProps}
       />
       {helpText ? <p className="field-help" id={helpId}>{helpText}</p> : null}
       {error ? <p className="field-error" id={errorId} role="alert">{error}</p> : null}

@@ -4,7 +4,7 @@ function hasFinding(findings, code) {
   return findings.some(
     (finding) =>
       finding.code === code &&
-      ["needs_attention", "manual_review"].includes(finding.status)
+      finding.status === "needs_attention"
   );
 }
 

@@ -1,7 +1,7 @@
 import { getAccessToken } from "./authService";
 
 const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api"
+  import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? "http://localhost:3000/api" : "/api")
 ).replace(/\/$/, "");
 
 export class ApiError extends Error {
@@ -15,10 +15,11 @@ export class ApiError extends Error {
 
 export async function apiRequest(path, options = {}) {
   const { auth = true, headers = {}, ...requestOptions } = options;
-  const requestHeaders = {
-    "Content-Type": "application/json",
-    ...headers
-  };
+  const requestHeaders = { ...headers };
+  const hasBody = requestOptions.body !== undefined && requestOptions.body !== null;
+  if (hasBody && !(requestOptions.body instanceof FormData) && !requestHeaders["Content-Type"]) {
+    requestHeaders["Content-Type"] = "application/json";
+  }
 
   if (auth) {
     const token = await getAccessToken();

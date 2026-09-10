@@ -11,43 +11,57 @@ function riskLevelFromScore(score) {
   return "high";
 }
 
-export function calculateScore(findings, answers) {
+function contextRiskFromPenalty(penalty) {
+  if (penalty >= 15) return "high";
+  if (penalty >= 5) return "medium";
+  return "low";
+}
+
+function highestPriority(a, b) {
+  const rank = { low: 0, medium: 1, high: 2 };
+  return rank[a] >= rank[b] ? a : b;
+}
+
+export function calculateScore(findings, answers, coverage = null) {
   const direct = findings.map((finding) => ({
     finding,
     penalty: findingPenalty(finding)
   }));
 
-  const scannerPenalty = Math.min(
-    70,
-    direct.reduce((total, item) => total + item.penalty, 0)
-  );
+  const scannerPenalty = Math.min(100, direct.reduce((total, item) => total + item.penalty, 0));
+  const score = clamp(100 - scannerPenalty, 0, 100);
+  const riskLevel = riskLevelFromScore(score);
 
   const contextAdjustments = calculateContextAdjustments(findings, answers);
-  const contextPenalty = Math.min(
-    30,
-    contextAdjustments.reduce((total, item) => total + item.penalty, 0)
-  );
-
-  const totalPenalty = Math.min(100, scannerPenalty + contextPenalty);
-  const score = clamp(100 - totalPenalty, 0, 100);
+  const contextPenalty = Math.min(100, contextAdjustments.reduce((total, item) => total + item.penalty, 0));
+  const contextRiskLevel = contextRiskFromPenalty(contextPenalty);
+  const overallPriority = highestPriority(riskLevel, contextRiskLevel);
 
   const categoryPenalties = {};
   for (const item of direct) {
     const category = item.finding.category || "general";
-    categoryPenalties[category] =
-      (categoryPenalties[category] || 0) + item.penalty;
-  }
-  for (const adjustment of contextAdjustments) {
-    categoryPenalties[adjustment.category] =
-      (categoryPenalties[adjustment.category] || 0) + adjustment.penalty;
+    categoryPenalties[category] = (categoryPenalties[category] || 0) + item.penalty;
   }
 
   const categoryScores = Object.fromEntries(
-    Object.entries(categoryPenalties).map(([category, penalty]) => [
-      category,
-      clamp(100 - Math.min(100, penalty), 0, 100)
-    ])
+    Object.entries(categoryPenalties).map(([category, penalty]) => [category, clamp(100 - Math.min(100, penalty), 0, 100)])
   );
+
+  const contextCategoryPenalties = {};
+  for (const adjustment of contextAdjustments) {
+    contextCategoryPenalties[adjustment.category] = (contextCategoryPenalties[adjustment.category] || 0) + adjustment.penalty;
+  }
+
+  const reviewFindings = direct
+    .filter((item) => item.finding.status === "manual_review")
+    .map(({ finding }) => ({
+      code: finding.code,
+      title: finding.title,
+      category: finding.category,
+      severity: finding.severity,
+      confidence: finding.confidence,
+      reason: finding.whyItMatters || finding.evidenceSummary || "Human verification is recommended."
+    }));
 
   const prioritizedFindings = direct
     .filter((item) => item.penalty > 0)
@@ -59,18 +73,27 @@ export function calculateScore(findings, answers) {
       category: finding.category,
       severity: finding.severity,
       status: finding.status,
-      penalty
+      penalty,
+      remediation: finding.remediation,
+      verification: finding.verification,
+      standards: finding.standards
     }));
 
   return {
     score,
-    riskLevel: riskLevelFromScore(score),
+    externalScore: score,
+    riskLevel,
+    externalRiskLevel: riskLevel,
     scannerPenalty,
     contextPenalty,
+    contextRiskLevel,
+    overallPriority,
     categoryScores,
+    contextCategoryPenalties,
     prioritizedFindings,
+    reviewFindings,
     contextAdjustments,
-    disclaimer:
-      "This deterministic score summarizes the checks and owner context used by AI Cyber Tracker; it is not proof that a website is completely secure or insecure."
+    coverage,
+    disclaimer: "The external posture score is deterministic and reflects only observed scanner controls. Owner context is shown separately and changes priority, not the technical facts. This is not proof that a website is completely secure or insecure."
   };
 }

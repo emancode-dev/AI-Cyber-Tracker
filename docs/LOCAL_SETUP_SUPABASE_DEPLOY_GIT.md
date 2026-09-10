@@ -42,8 +42,9 @@ Set these server values:
 CLIENT_ORIGIN=http://localhost:5173
 SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+SUPABASE_SECRET_KEY=YOUR_BACKEND_ONLY_SECRET_KEY
 OPENROUTER_API_KEY=YOUR_SERVER_ONLY_KEY
-OPENROUTER_MODEL=openrouter/free
+OPENROUTER_MODEL=google/gemma-4-26b-a4b-it:free
 OPENROUTER_TIMEOUT_MS=30000
 ```
 
@@ -70,31 +71,15 @@ npx supabase db push --dry-run
 npx supabase db push
 ```
 
-The new Day 31–40 migration is:
+Apply every migration through:
 
 ```text
-supabase/migrations/202608300007_ai_reports_history_retention.sql
+supabase/migrations/202609090011_dashboard_pending_scan_state.sql
 ```
 
-It creates `ai_reports`, `score_history`, indexes, owner-scoped RLS policies and `cleanup_expired_assessment_data()`.
+The latest migrations harden trusted writes, atomic state transitions, durable history, shared scan quotas and scheduled cleanup/recovery, then add live pending-scan status without replacing retained scores.
 
-Enable Supabase Cron in the Dashboard, then run this in the SQL Editor:
-
-```sql
-select cron.schedule(
-  'cleanup-expired-cyber-assessments',
-  '17 * * * *',
-  $$select public.cleanup_expired_assessment_data();$$
-);
-```
-
-Confirm it exists:
-
-```sql
-select jobid, jobname, schedule, command, active
-from cron.job
-where jobname = 'cleanup-expired-cyber-assessments';
-```
+Migration 010 schedules the cleanup and stale-scan recovery Cron jobs. Verify them with `select jobid, jobname, schedule, command, active from cron.job;` and do not create duplicate schedules.
 
 ## 4. Run release checks
 

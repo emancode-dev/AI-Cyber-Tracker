@@ -4,6 +4,7 @@ import {
   deleteWebsiteController,
   getWebsiteController,
   getWebsiteHistoryController,
+  getWebsiteFindingHistoryController,
   listWebsitesController,
   updateWebsiteController
 } from "../controllers/websiteController.js";
@@ -11,6 +12,7 @@ import { startScanController } from "../controllers/scanController.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { requireWebsiteOwnership } from "../middleware/requireOwnership.js";
 import { scanRateLimit } from "../middleware/rateLimit.js";
+import { requireTrustedWriter } from "../middleware/requireTrustedWriter.js";
 import {
   validateScanStartBody,
   validateWebsiteBody,
@@ -28,7 +30,8 @@ router.get(
   asyncHandler(getWebsiteController)
 );
 router.get("/:id/history", asyncHandler(requireWebsiteOwnership), asyncHandler(getWebsiteHistoryController));
-router.post("/", validateWebsiteBody, asyncHandler(createWebsiteController));
+router.get("/:id/finding-history", asyncHandler(requireWebsiteOwnership), asyncHandler(getWebsiteFindingHistoryController));
+router.post("/", validateWebsiteBody, requireTrustedWriter, asyncHandler(createWebsiteController));
 router.patch(
   "/:id",
   asyncHandler(requireWebsiteOwnership),
@@ -44,7 +47,8 @@ router.post(
   "/:id/scans",
   asyncHandler(requireWebsiteOwnership),
   validateScanStartBody,
-  scanRateLimit,
+  requireTrustedWriter,
+  asyncHandler(scanRateLimit),
   asyncHandler(startScanController)
 );
 

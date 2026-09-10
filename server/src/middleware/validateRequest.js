@@ -41,21 +41,15 @@ export function validateWebsiteBody(req, _res, next) {
 }
 
 export function validateWebsitePatch(req, _res, next) {
-  const { name, url, authorizationConfirmed } = req.body || {};
+  const { name, url } = req.body || {};
   const details = {};
 
   if (name !== undefined && (typeof name !== "string" || !name.trim())) {
     details.name = "Website name cannot be empty.";
   }
 
-  if (url !== undefined) {
-    if (typeof url !== "string" || !isHttpUrl(url.trim())) {
-      details.url = "Enter a complete http:// or https:// URL.";
-    }
-    if (authorizationConfirmed !== true) {
-      details.authorizationConfirmed =
-        "Changing the target URL requires a fresh ownership/authorization confirmation.";
-    }
+  if (url !== undefined && (typeof url !== "string" || !isHttpUrl(url.trim()))) {
+    details.url = "Enter a complete http:// or https:// URL.";
   }
 
   if (Object.keys(details).length) {

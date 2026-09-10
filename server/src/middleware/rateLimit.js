@@ -1,46 +1,29 @@
 import { env } from "../config/env.js";
+import { consumeScanQuota } from "../repositories/scanRepository.js";
 import { HttpError } from "../utils/HttpError.js";
 
-const buckets = new Map();
-
-function getKey(req) {
-  return req.user?.id || req.ip || "anonymous";
-}
-
-export function scanRateLimit(req, res, next) {
-  const now = Date.now();
-  const key = getKey(req);
-  const current = buckets.get(key);
-
-  if (!current || now >= current.resetAt) {
-    buckets.set(key, {
-      count: 1,
-      resetAt: now + env.scanRateLimitWindowMs
-    });
-    return next();
+export async function scanRateLimit(req, res, next) {
+  if (!req.user?.id || !req.systemSupabase) {
+    return next(new HttpError(503, "Shared scan quota is not available.", "SCAN_RATE_LIMIT_UNAVAILABLE"));
   }
 
-  if (current.count >= env.scanRateLimitMax) {
-    const retryAfterSeconds = Math.max(
-      1,
-      Math.ceil((current.resetAt - now) / 1000)
-    );
+  const quota = await consumeScanQuota(
+    req.systemSupabase,
+    req.user.id,
+    env.scanRateLimitMax,
+    env.scanRateLimitWindowMs
+  );
+
+  if (!quota.allowed) {
+    const retryAfterSeconds = Math.max(1, Number(quota.retryAfterSeconds) || 1);
     res.setHeader("Retry-After", String(retryAfterSeconds));
-    return next(
-      new HttpError(
-        429,
-        "Too many scan requests. Please wait before starting another scan.",
-        "SCAN_RATE_LIMITED",
-        { retryAfterSeconds }
-      )
-    );
+    return next(new HttpError(
+      429,
+      "Too many scan requests. Please wait before starting another scan.",
+      "SCAN_RATE_LIMITED",
+      { retryAfterSeconds }
+    ));
   }
 
-  current.count += 1;
-  buckets.set(key, current);
   next();
-}
-
-export function clearRateLimitStateForTests() {
-  buckets.clear();
 }

@@ -68,7 +68,7 @@ function QuestionnairePage() {
           </div>
 
           {state.progress.complete ? (
-            <div className="next-step-card next-step-card-v2 complete-card-v2"><div><p className="eyebrow">CONTEXT COMPLETE</p><h2>Now the score can account for what the scanner couldn’t know.</h2><p className="muted">The same findings + the same answers always produce the same deterministic score.</p></div><Button onClick={() => navigate(`/analysis/${scanId}`)}>Calculate score →</Button></div>
+            <div className="next-step-card next-step-card-v2 complete-card-v2"><div><p className="eyebrow">CONTEXT COMPLETE</p><h2>Now owner context can refine priority without changing the external score.</h2><p className="muted">The external score stays evidence-based; the same verified findings and owner answers produce the same deterministic priority.</p></div><Button onClick={() => navigate(`/analysis/${scanId}`)}>Calculate score →</Button></div>
           ) : currentQuestion ? (
             <article className="question-card question-card-v2">
               <div className="question-number-v2">{String(answered + 1).padStart(2, "0")}</div>

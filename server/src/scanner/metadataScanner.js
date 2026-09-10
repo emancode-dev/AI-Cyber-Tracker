@@ -10,24 +10,58 @@ function scanHtml(body) {
   return findings;
 }
 
-async function checkMetadataEndpoint(finalUrl, path, code, title) {
+function looksLikeRobots(response) {
+  const type = String(response.headers["content-type"] || "").toLowerCase();
+  const body = String(response.body || "").slice(0, 200000);
+  return (!type || type.includes("text/plain") || type.includes("text/")) && /^\s*(user-agent|sitemap)\s*:/im.test(body);
+}
+
+function looksLikeSitemap(response) {
+  const type = String(response.headers["content-type"] || "").toLowerCase();
+  const body = String(response.body || "").slice(0, 200000);
+  return (type.includes("xml") || /^\s*<\?xml/i.test(body)) && /<(urlset|sitemapindex)\b/i.test(body);
+}
+
+function looksLikeSecurityTxt(response) {
+  const type = String(response.headers["content-type"] || "").toLowerCase();
+  const body = String(response.body || "").slice(0, 200000);
+  return (!type || type.includes("text/plain") || type.includes("text/")) && /^\s*contact\s*:/im.test(body) && /^\s*expires\s*:/im.test(body);
+}
+
+const VALIDATORS = {
+  "/robots.txt": looksLikeRobots,
+  "/sitemap.xml": looksLikeSitemap,
+  "/.well-known/security.txt": looksLikeSecurityTxt
+};
+
+export function validateMetadataContent(path, response) {
+  return Boolean(VALIDATORS[path]?.(response));
+}
+
+export async function checkMetadataEndpoint(finalUrl, path, code, title) {
   const target = new URL(path, finalUrl).toString();
   try {
     const response = await safeRequestWithRedirects(target, { maxRedirects: 1 });
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return createFinding({ code, category: "metadata", severity: "info", status: "observed", confidence: "high", type: "observation", title, evidenceSummary: `${path} returned HTTP ${response.statusCode}.`, whyItMatters: "This is safe public metadata observation, not a vulnerability by itself." });
-    }
-  } catch {
-    // Missing/unreachable optional metadata is not treated as a vulnerability.
+    const success = response.statusCode >= 200 && response.statusCode < 300;
+    const validContent = success && validateMetadataContent(path, response);
+    const status = validContent ? "observed" : success ? "inconclusive" : "not_observed";
+    return {
+      finding: validContent ? createFinding({ code, category: "metadata", severity: "info", status: "observed", confidence: "high", type: "observation", title, evidenceSummary: `${path} returned HTTP ${response.statusCode} with content matching the expected public metadata format.`, whyItMatters: "This is safe public metadata observation, not a vulnerability by itself.", evidence: { path, statusCode: response.statusCode } }) : null,
+      observation: { kind: "metadata", key: path, status, source: "public_endpoint", details: { statusCode: response.statusCode, contentValidated: validContent } }
+    };
+  } catch (error) {
+    return { finding: null, observation: { kind: "metadata", key: path, status: "inconclusive", source: "public_endpoint", details: { reason: error?.code || "request_failed" } } };
   }
-  return null;
 }
 
-export async function scanMetadata(finalUrl, body) {
-  const endpointFindings = await Promise.all([
+export async function scanMetadata(finalUrl, body, { representative = true } = {}) {
+  const endpointResults = await Promise.all([
     checkMetadataEndpoint(finalUrl, "/robots.txt", FINDING_CODES.ROBOTS_TXT_PRESENT, "robots.txt observed"),
     checkMetadataEndpoint(finalUrl, "/sitemap.xml", FINDING_CODES.SITEMAP_PRESENT, "sitemap.xml observed"),
     checkMetadataEndpoint(finalUrl, "/.well-known/security.txt", FINDING_CODES.SECURITY_TXT_PRESENT, "security.txt observed")
   ]);
-  return [...scanHtml(body), ...endpointFindings.filter(Boolean)];
+  return {
+    findings: [...(representative ? scanHtml(body) : []), ...endpointResults.map((item) => item.finding).filter(Boolean)],
+    observations: endpointResults.map((item) => item.observation)
+  };
 }
